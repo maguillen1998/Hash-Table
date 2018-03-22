@@ -256,6 +256,13 @@ public:
 		{
 			//do nothing
 		}
+		else if(empty())
+		{
+			head = otherlist.head;
+			tail = otherlist.tail;
+			otherlist.head = NULL;
+			otherlist.tail = NULL;
+		}
 		else
 		{
 			tail->next = otherlist.head;
@@ -325,7 +332,7 @@ public:
 		{
 			for (node* tmp = head; tmp != NULL; tmp = tmp->next)
 			{
-				std::cout << "id: " << tmp->data.id << ' ' << "name: " << tmp->data.name << ' ' << "GPA: " << tmp->data.gpa << "  ";
+				std::cout << "id: " << tmp->data.id << ' ' << "name: " << tmp->data.name << ' ' << "GPA: " << tmp->data.gpa << "  " << std::endl;
 			}
 		}
 		else
@@ -395,7 +402,7 @@ public:
 	}
 	~hashTable()
 	{
-		delete table;
+		//delete table;
 	}
 
 	//create a table of a given size
@@ -414,6 +421,7 @@ public:
 	{
 		table[hashIndex(s.id)].insert(s);
 		numStudents++;
+		optimalResize();
 	}
 
 	//remove student with given id from table
@@ -423,6 +431,7 @@ public:
 		int index = hashIndex(id);
 		table[index].remove(table[index].retrieveStudentIDNode(id));
 		numStudents--;
+		optimalResize();
 	}
 
 	//Change the gpa of the student with given id number to newGPA
@@ -440,32 +449,18 @@ public:
 	}
 	
 	//Change the size of your table!  newSize may be bigger or smaller that the current size.
-	//Run time? grow O(n) shink O(
+	//Run time? O(n)
 	void resize(unsigned int newSize)
 	{
-		/*works to grow*/
-		if (newSize > tableSize) {
-			unsigned int oldCapacity = tableSize;
-			tableSize = newSize;
-			studentList* newTable = new studentList[tableSize];
-
-			for (unsigned int i = 0; i < oldCapacity; i++)
-			{
-				newTable[i] = table[i];
-			}
-			table = newTable;
+		unsigned int oldCapacity = tableSize;
+		tableSize = newSize;
+		studentList newList;
+		for (int i = 0; i < oldCapacity; i++) {
+			newList.mergeList(table[i]);
 		}
-		/*works to shrink*/
-		else if (newSize < tableSize) {
-			studentList newList;
-			for (int i = 0; i < tableSize; i++) {
-				newList.mergeList(table[i]);
-			}
-
-			table = new studentList[newSize];
-			insert(newList.popFrontStudent());
-		}
-
+		//delete table;
+		table = new studentList[tableSize];
+		insert(newList.popFrontStudent());
 	}
 
 	//Resize your table to an "optimal" choice based on the
@@ -473,9 +468,13 @@ public:
 	//If you make it too small, your searches are slow.  Pick a value
 	//that is perfect.  Include in comments the reasoning for your
 	//resizing choice.
+	/*with the table always slightly larger than the number of students,
+	and with a reasonable distribution of students, it will allow */
 	void optimalResize()
 	{
-		resize(numStudents * 1.5);
+		if (numStudents == tableSize || tableSize > numStudents * 2) {
+			resize(numStudents * 2);
+		}
 	}
 
 	void print()
@@ -485,11 +484,18 @@ public:
 		}
 	}
 
+	void printAllStudents()
+	{
+		for (int i = 0; i < tableSize; i++) {
+			table[i].printList();
+			std::cout << std::endl;
+		}
+	}
 	void RANDOM(int listSize)
 	{
 		srand(time(NULL));
 		for (int i = 0; i < listSize; i++) {
-			student RStudent("Pedro", i, 4.0);
+			student RStudent("Pedro", rand(), 4.0);
 			insert(RStudent);
 		}
 	}
